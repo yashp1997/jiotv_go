@@ -28,14 +28,15 @@
       <label for="otp" class="label">OTP</label>
       <input
         id="otp"
-        type="number"
+        type="tel"
         class="input input-bordered"
         placeholder="543210"
-        max="999999"
-        min="100000"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        minlength="4"
         required
       />
-      <button onclick="loginOTPVerifyClick()" class="btn btn-primary">
+      <button onclick="loginOTPVerifyClick()" type="button" class="btn btn-primary">
         Verify
       </button>
     </div>

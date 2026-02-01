@@ -78,7 +78,7 @@ func main() {
 					tlsCertPath := c.String("tls-cert")
 					tlsKeyPath := c.String("tls-key")
 					// Pass configPath for consistency, though JioTVServer won't load it again
-					return cmd.JioTVServer(cmd.JioTVServerConfig{
+					return cmd.StartJioTVServer(cmd.JioTVServerConfig{
 						Host:        host,
 						Port:        port,
 						TLS:         tls,
@@ -220,6 +220,24 @@ func main() {
 				},
 			},
 		},
+	}
+
+	// If no arguments are provided, default to GUI mode
+	if len(os.Args) == 1 {
+		// Initialize logger and config for GUI mode defaults
+		// We might need to handle config loading if it wasn't triggered by ConfigFlag
+		cmd.InitializeLogger()
+		// Try to load default config if exists, ignore error
+		cmd.LoadConfig("config.toml")
+		
+		// Initialize other components
+		if err := store.Init(); err != nil {
+			log.Fatal(err)
+		}
+		secureurl.Init()
+
+		cmd.StartGUI()
+		return
 	}
 
 	if err := app.Run(os.Args); err != nil {

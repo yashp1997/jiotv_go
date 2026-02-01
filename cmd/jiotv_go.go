@@ -46,13 +46,9 @@ type JioTVServerConfig struct {
 	TLSKeyPath  string
 }
 
-// JioTVServer starts the JioTV server.
+// JioTVServer returns the configured Fiber app.
 // Assumes config and logger are already initialized.
-// It initializes secure URLs, EPG, store, and handlers.
-// It then configures the Fiber app with middleware and routes.
-// It starts listening on the provided host and port.
-// Returns an error if listening fails.
-func JioTVServer(jiotvServerConfig JioTVServerConfig) error {
+func JioTVServer(jiotvServerConfig JioTVServerConfig) (*fiber.App, error) {
 	// Config, Logger and Store are assumed to be initialized in main.go
 
 	// if config EPG is true or file epg.xml.gz exists
@@ -62,7 +58,6 @@ func JioTVServer(jiotvServerConfig JioTVServerConfig) error {
 
 	// Start Scheduler
 	scheduler.Init()
-	defer scheduler.Stop()
 
 	engine := html.NewFileSystem(http.FS(web.GetViewFiles()), ".html")
 	if config.Cfg.Debug {
@@ -129,6 +124,18 @@ func JioTVServer(jiotvServerConfig JioTVServerConfig) error {
 	app.Get("/render.mpd", handlers.MpdHandler)
 	app.Use("/render.dash", handlers.DashHandler)
 
+	return app, nil
+}
+
+// StartJioTVServer starts the JioTV server.
+// It calls JioTVServer to get the app and then starts listening.
+func StartJioTVServer(jiotvServerConfig JioTVServerConfig) error {
+	app, err := JioTVServer(jiotvServerConfig)
+	if err != nil {
+		return err
+	}
+	defer scheduler.Stop()
+	
 	if jiotvServerConfig.TLS {
 		if jiotvServerConfig.TLSCertPath == "" || jiotvServerConfig.TLSKeyPath == "" {
 			return fmt.Errorf("TLS cert and key paths are required for HTTPS. Please provide them using --tls-cert and --tls-key flags")
